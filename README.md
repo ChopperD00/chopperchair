@@ -1,6 +1,6 @@
 # 🦽 Chopper Chair
 
-**AI-powered 3D-printable dog wheelchair with SitGo sit/lie-down mechanism.**  
+**AI-powered 3D-printable dog wheelchair with a spring-pivot sit/lie-down mechanism.**  
 Gemma 4 vision pipeline measures your dog from photos and auto-generates a custom-fit frame.
 
 > *In memory of Chopper — the good boy this was built for.*
@@ -14,7 +14,7 @@ Gemma 4 vision pipeline measures your dog from photos and auto-generates a custo
 
 Every dog wheelchair on the market locks you into fixed size tiers. Chopper Chair generates a **fully custom frame** from a photo of your dog — no measuring tape, no vet visit, no guessing.
 
-The **SitGo mechanism** — the single biggest differentiator — lets the dog sit and lie down naturally while in the chair. No other open-source wheelchair design has this. The spring-tensioned pivot arms collapse when the dog backs into rubber stoppers, and spring back when they stand.
+The **spring-pivot mechanism** lets the dog sit and lie down naturally while in the chair. Spring-tensioned pivot arms collapse when the dog backs into contact stoppers, and return to standing position automatically. This is the feature that most open-source designs skip entirely.
 
 ---
 
@@ -23,7 +23,7 @@ The **SitGo mechanism** — the single biggest differentiator — lets the dog s
 ```
 Photo of dog (side + rear)
        ↓
-Gemma 4 Vision (E4B on ACIDBURN)
+Gemma 4 Vision (E4B — runs locally via Ollama)
        ↓
 measurements.json
   torso_length, hip_width, rear_leg_length,
@@ -58,12 +58,14 @@ No TPU needed. Any printer with 120mm bed works.
 
 ---
 
-## SitGo Mechanism
+## How the pivot mechanism works
 
-1. **Standing** — Springs hold pivot arms level, wheels at ground
-2. **Sitting** — Dog shifts weight back, arms pivot down ~25°, rear lowers
-3. **Lying down** — Dog backs into rubber stoppers, arms collapse to ~45°, full floor contact
+1. **Standing** — Springs hold pivot arms level, wheels flat on ground
+2. **Sitting** — Dog shifts weight back, arms pivot ~25°, rear lowers naturally
+3. **Lying down** — Dog backs into contact stoppers, arms collapse to ~45°, full floor contact
 4. **Standing up** — Springs counterbalance rear body weight, arms return to level
+
+See [`docs/pivot-mechanism.md`](docs/pivot-mechanism.md) for full design notes and spring selection.
 
 ---
 
@@ -77,7 +79,7 @@ No TPU needed. Any printer with 120mm bed works.
 | `girth` | 165mm | Belly circumference |
 | `ground_clearance` | 45mm | Chassis height |
 | `wheel_diameter` | 100mm | Wheel OD |
-| `collapse_angle` | 45° | SitGo collapse angle |
+| `collapse_angle` | 45° | Pivot arm collapse angle |
 
 ---
 
@@ -93,7 +95,8 @@ chopperchair/
 │   ├── generate.py          # Params → STL export
 │   └── models.py            # Ollama node routing
 ├── docs/
-│   └── sitgo-mechanism.md   # SitGo design notes
+│   ├── assembly.md          # Step-by-step build instructions
+│   └── pivot-mechanism.md   # Pivot mechanism design notes
 ├── web/
 │   └── index.html           # Parametric maker UI
 └── README.md
