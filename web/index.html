@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chopper Chair — Parametric Configurator</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+    :root {
+      --bg:       #0a0a0b;
+      --surface:  #111114;
+      --border:   #1e1e24;
+      --accent:   #7c6af7;
+      --accent2:  #5a4fd4;
+      --hi:       #4ade80;
+      --muted:    #444455;
+      --text:     #e8e8f0;
+      --subtext:  #888899;
+      --danger:   #f87171;
+      --font:     'JetBrains Mono', 'Courier New', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      overflow: hidden;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      grid-template-rows: 48px 1fr 200px;
+      height: 100vh;
+      gap: 0;
+    }
+
+    .header {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .logo { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; }
+    .logo span { color: var(--accent); }
+    .tag { font-size: 10px; color: var(--subtext); background: var(--border); padding: 2px 8px; border-radius: 3px; letter-spacing: 0.5px; text-transform: uppercase; }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+
+    .build-toggle { display: flex; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+    .build-btn { padding: 6px 14px; font-family: var(--font); font-size: 11px; font-weight: 500; cursor: pointer; border: none; background: transparent; color: var(--subtext); letter-spacing: 0.3px; transition: all 0.15s; }
+    .build-btn.active { background: var(--accent); color: #fff; }
+
+    .github-link { display: flex; align-items: center; gap: 6px; color: var(--subtext); text-decoration: none; font-size: 11px; padding: 5px 10px; border: 1px solid var(--border); border-radius: 4px; transition: all 0.15s; }
+    .github-link:hover { color: var(--text); border-color: var(--muted); }
+
+    .sidebar { grid-row: 2 / 3; border-right: 1px solid var(--border); overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 4px; }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .section-label { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; padding: 8px 0 6px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+
+    .param-row { display: flex; flex-direction: column; gap: 5px; padding: 8px 0; border-bottom: 1px solid #111116; }
+    .param-header { display: flex; justify-content: space-between; align-items: baseline; }
+    .param-name { font-size: 11px; font-weight: 500; color: var(--text); }
+    .param-value { font-size: 12px; font-weight: 600; color: var(--accent); min-width: 48px; text-align: right; }
+    .param-desc { font-size: 10px; color: var(--subtext); margin-bottom: 2px; }
+
+    input[type="range"] { -webkit-appearance: none; width: 100%; height: 3px; background: var(--border); border-radius: 2px; outline: none; cursor: pointer; }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 2px solid var(--bg); box-shadow: 0 0 0 1px var(--accent); transition: transform 0.1s; }
+    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+    .spring-select-row { display: flex; flex-direction: column; gap: 5px; padding: 8px 0; border-bottom: 1px solid #111116; }
+    .spring-select-row label { font-size: 11px; font-weight: 500; color: var(--text); }
+    .spring-select-row select { background: var(--bg); border: 1px solid var(--border); color: var(--text); font-family: var(--font); font-size: 11px; padding: 6px 8px; border-radius: 3px; outline: none; cursor: pointer; width: 100%; }
+    .spring-select-row select:focus { border-color: var(--accent); }
+    .spring-result { font-size: 10px; color: var(--hi); margin-top: 2px; }
+
+    .download-btn { margin-top: 12px; padding: 10px 16px; background: var(--accent); color: #fff; border: none; border-radius: 4px; font-family: var(--font); font-size: 12px; font-weight: 600; cursor: pointer; width: 100%; letter-spacing: 0.3px; transition: background 0.15s; }
+    .download-btn:hover { background: var(--accent2); }
+    .download-btn.disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+
+    .viewport { grid-row: 2 / 3; position: relative; background: #08080a; overflow: hidden; }
+    .viewport iframe { width: 100%; height: 100%; border: none; display: block; }
+    .viewport-overlay { position: absolute; bottom: 12px; right: 12px; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+    .vp-badge { font-size: 10px; color: var(--subtext); background: rgba(10,10,11,0.8); border: 1px solid var(--border); padding: 3px 8px; border-radius: 3px; backdrop-filter: blur(4px); }
+    .vp-badge.live { color: var(--hi); border-color: rgba(74,222,128,0.3); }
+
+    .bom-panel { grid-column: 1 / -1; border-top: 1px solid var(--border); background: var(--surface); overflow: hidden; display: flex; flex-direction: column; }
+    .bom-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .bom-title { font-size: 11px; font-weight: 600; color: var(--subtext); letter-spacing: 0.5px; text-transform: uppercase; }
+    .bom-summary { display: flex; gap: 20px; font-size: 11px; }
+    .bom-stat { color: var(--subtext); }
+    .bom-stat span { color: var(--accent); font-weight: 600; }
+    .bom-stat.cost span { color: var(--hi); }
+    .bom-table-wrap { overflow-x: auto; flex: 1; }
+    .bom-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .bom-table th { text-align: left; padding: 6px 16px; color: var(--muted); font-weight: 500; letter-spacing: 0.3px; text-transform: uppercase; font-size: 10px; white-space: nowrap; position: sticky; top: 0; background: var(--surface); }
+    .bom-table td { padding: 5px 16px; border-top: 1px solid #111116; color: var(--text); white-space: nowrap; }
+    .bom-table tr:hover td { background: rgba(124,106,247,0.05); }
+    .item-type { display: inline-block; padding: 1px 6px; border-radius: 2px; font-size: 10px; font-weight: 500; }
+    .item-type.print { background: rgba(124,106,247,0.15); color: var(--accent); }
+    .item-type.buy   { background: rgba(74,222,128,0.12); color: var(--hi); }
+    .item-type.opt   { background: rgba(255,255,255,0.06); color: var(--subtext); }
+    .cost-cell { color: var(--hi); font-weight: 500; }
+    .free-cell { color: var(--muted); }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">🦽 Chopper<span>Chair</span></div>
+      <div class="tag">Parametric Configurator</div>
+    </div>
+    <div class="header-right">
+      <div class="build-toggle">
+        <button class="build-btn active" id="btn-build2" onclick="setBuild(2)">Build 2 — Hybrid</button>
+        <button class="build-btn" id="btn-build1" onclick="setBuild(1)">Build 1 — Full Print</button>
+      </div>
+      <a class="github-link" href="https://github.com/ChopperD00/chopperchair" target="_blank">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </header>
+
+  <aside class="sidebar">
+    <div class="section-label">Dog Measurements</div>
+
+    <div class="param-row">
+      <div class="param-header"><span class="param-name">torso_length</span><span class="param-value" id="val-torso">160 mm</span></div>
+      <div class="param-desc">Shoulder to hip</div>
+      <input type="range" id="sl-torso" min="80" max="280" value="160" step="5" oninput="updateParam('torso_length', this.value, 'val-torso', 'mm')">
+    </div>
+
+    <div class="param-row">
+      <div class="param-header"><span class="param-name">hip_width</span><span class="param-value" id="val-hip">90 mm</span></div>
+      <div class="param-desc">Hip width at widest point</div>
+      <input type="range" id="sl-hip" min="50" max="180" value="90" step="5" oninput="updateParam('hip_width', this.value, 'val-hip', 'mm')">
+    </div>
+
+    <div class="param-row">
+      <div class="param-header"><span class="param-name">rear_leg_length</span><span class="param-value" id="val-leg">80 mm</span></div>
+      <div class="param-desc">Floor to hip joint</div>
+      <input type="range" id="sl-leg" min="40" max="160" value="80" step="5" oninput="updateParam('rear_leg_length', this.value, 'val-leg', 'mm')">
+    </div>
+
+    <div class="param-row">
+      <div class="param-header"><span class="param-name">ground_clearance</span><span class="param-value" id="val-gc">45 mm</span></div>
+      <div class="param-desc">Chassis height off ground</div>
+      <input type="range" id="sl-gc" min="20" max="100" value="45" step="5" oninput="updateParam('ground_clearance', this.value, 'val-gc', 'mm')">
+    </div>
+
+    <div class="section-label" style="margin-top:8px">Wheel Config</div>
+
+    <div class="param-row">
+      <div class="param-header"><span class="param-name">wheel_diameter</span><span class="param-value" id="val-wheel">100 mm</span></div>
+      <div class="param-desc">Wheel OD</div>
+      <input type="range" id="sl-wheel" min="60" max="150" value="100" step="10" oninput="updateParam('wheel_diameter', this.value, 'val-wheel', 'mm')">
+    </div>
+
+    <div class="param-row">
+      <div class="param-header"><span class="param-name">collapse_angle</span><span class="param-value" id="val-angle">45°</span></div>
+      <div class="param-desc">Pivot arm sit/lie collapse</div>
+      <input type="range" id="sl-angle" min="30" max="60" value="45" step="5" oninput="updateParam('collapse_angle', this.value, 'val-angle', '°')">
+    </div>
+
+    <div class="section-label" style="margin-top:8px">Spring Selection</div>
+
+    <div class="spring-select-row">
+      <label>Dog weight class</label>
+      <select id="spring-select" onchange="updateSpring()">
+        <option value="1.0|40">Under 10 lbs — 1.0 lb/in</option>
+        <option value="1.5|45" selected>10–20 lbs — 1.5 lb/in (default)</option>
+        <option value="2.5|50">20–35 lbs — 2.5 lb/in</option>
+        <option value="3.5|55">Over 35 lbs — 3.5 lb/in</option>
+      </select>
+      <div class="spring-result" id="spring-result">→ Spring rate: 1.5 lb/in · Collapse angle: 45°</div>
+    </div>
+
+    <button class="download-btn disabled" onclick="handleDownload()">↓ Download STLs (coming soon)</button>
+  </aside>
+
+  <main class="viewport">
+    <iframe id="spline-frame" src="https://my.spline.design/hybrid-jiGKr9bYRO9dPv0yNvBHt6DN/" frameborder="0" allow="autoplay" allowfullscreen></iframe>
+    <div class="viewport-overlay">
+      <div class="vp-badge live">● LIVE PREVIEW</div>
+      <div class="vp-badge" id="vp-build-badge">Build 2 — Hybrid</div>
+    </div>
+  </main>
+
+  <section class="bom-panel">
+    <div class="bom-header">
+      <div class="bom-title">Bill of Materials</div>
+      <div class="bom-summary">
+        <div class="bom-stat">Parts: <span id="bom-part-count">13</span> printed</div>
+        <div class="bom-stat">Print time: <span id="bom-print-time">~4–5h</span></div>
+        <div class="bom-stat cost">Hardware: <span id="bom-cost">~$53</span></div>
+      </div>
+    </div>
+    <div class="bom-table-wrap">
+      <table class="bom-table">
+        <thead><tr><th>Part</th><th>Type</th><th>Material</th><th>Infill</th><th>Qty</th><th>Note</th><th>Est. Cost</th></tr></thead>
+        <tbody id="bom-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  const BOM_SHARED = [
+    { part: 'Rail_Left',         type: 'print', mat: 'PETG',    infill: '40%', qty: 1, note: 'Main chassis rail', cost: '' },
+    { part: 'Rail_Right',        type: 'print', mat: 'PETG',    infill: '40%', qty: 1, note: 'Main chassis rail', cost: '' },
+    { part: 'Crossbar_Front',    type: 'print', mat: 'PETG',    infill: '40%', qty: 1, note: 'Front frame span', cost: '' },
+    { part: 'Crossbar_Rear',     type: 'print', mat: 'PETG',    infill: '40%', qty: 1, note: 'Rear frame span / axle mount', cost: '' },
+    { part: 'PivotArm_Left',     type: 'print', mat: 'PETG',    infill: '50%', qty: 1, note: 'Print at 45° orientation', cost: '' },
+    { part: 'PivotArm_Right',    type: 'print', mat: 'PETG',    infill: '50%', qty: 1, note: 'Print at 45° orientation', cost: '' },
+    { part: 'SpringBoss_Left',   type: 'print', mat: 'PETG',    infill: '60%', qty: 1, note: 'Press-fit, do not glue', cost: '' },
+    { part: 'SpringBoss_Right',  type: 'print', mat: 'PETG',    infill: '60%', qty: 1, note: 'Press-fit, do not glue', cost: '' },
+    { part: 'AxleCap_Left',      type: 'print', mat: 'PLA+',    infill: '50%', qty: 1, note: 'M4 set-screw bore', cost: '' },
+    { part: 'AxleCap_Right',     type: 'print', mat: 'PLA+',    infill: '50%', qty: 1, note: 'M4 set-screw bore', cost: '' },
+    { part: 'BellySling_Mount',  type: 'print', mat: 'PLA',     infill: '30%', qty: 1, note: 'Sling thread-through slots', cost: '' },
+    { part: 'Stopper_Left',      type: 'print', mat: 'PLA+',    infill: '60%', qty: 1, note: 'Add foam pad to contact face', cost: '' },
+    { part: 'Stopper_Right',     type: 'print', mat: 'PLA+',    infill: '60%', qty: 1, note: 'Add foam pad to contact face', cost: '' },
+  ];
+
+  const BOM_BUILD1_EXTRA = [
+    { part: 'Wheel_Left',  type: 'print', mat: 'TPU 95A', infill: '20%', qty: 1, note: 'Flexible tire', cost: '' },
+    { part: 'Wheel_Right', type: 'print', mat: 'TPU 95A', infill: '20%', qty: 1, note: 'Flexible tire', cost: '' },
+  ];
+
+  const BOM_BUILD2_HARDWARE = [
+    { part: 'Foam-fill wheels × 2',     type: 'buy', mat: '—', infill: '—', qty: 1, note: '"10mm bore wheelchair wheel 100mm"', cost: '~$14' },
+    { part: 'Stainless axle rod',        type: 'buy', mat: '—', infill: '—', qty: 1, note: '10mm OD × 300mm', cost: '~$8' },
+    { part: 'Torsion springs × 2',       type: 'buy', mat: '—', infill: '—', qty: 1, note: '10mm ID, see spring selector', cost: '~$8' },
+    { part: 'Neoprene belly sling',      type: 'buy', mat: '—', infill: '—', qty: 1, note: 'Adjustable small-dog size', cost: '~$16' },
+    { part: 'M4×20mm socket bolts × 2', type: 'buy', mat: '—', infill: '—', qty: 1, note: 'Axle cap set screws', cost: '~$5' },
+    { part: 'Craft foam strip (opt.)',   type: 'opt', mat: '—', infill: '—', qty: 1, note: '2mm, for stopper padding', cost: '~$2' },
+  ];
+
+  window.currentBuild = 2;
+
+  window.updateParam = function(varName, value, displayId, unit) {
+    document.getElementById(displayId).textContent = value + ' ' + unit;
+    console.log('[Chopper Chair] ' + varName + ' = ' + value + unit);
+  };
+
+  window.updateSpring = function() {
+    const sel = document.getElementById('spring-select');
+    const parts = sel.value.split('|');
+    const rate = parts[0], angle = parts[1];
+    document.getElementById('spring-result').textContent = '→ Spring rate: ' + rate + ' lb/in · Collapse angle: ' + angle + '°';
+    document.getElementById('sl-angle').value = angle;
+    document.getElementById('val-angle').textContent = angle + '°';
+  };
+
+  window.setBuild = function(build) {
+    window.currentBuild = build;
+    document.getElementById('btn-build1').classList.toggle('active', build === 1);
+    document.getElementById('btn-build2').classList.toggle('active', build === 2);
+    document.getElementById('vp-build-badge').textContent = build === 1 ? 'Build 1 — Full Print' : 'Build 2 — Hybrid';
+    renderBOM();
+  };
+
+  window.handleDownload = function() {
+    alert('STL generation pipeline coming soon.\nStar the repo: github.com/ChopperD00/chopperchair');
+  };
+
+  function renderBOM() {
+    const build = window.currentBuild;
+    const tbody = document.getElementById('bom-body');
+    let rows = [...BOM_SHARED];
+    if (build === 1) rows = rows.concat(BOM_BUILD1_EXTRA);
+    else rows = rows.concat(BOM_BUILD2_HARDWARE);
+    const printCount = build === 1 ? 15 : 13;
+    document.getElementById('bom-part-count').textContent = printCount;
+    document.getElementById('bom-print-time').textContent = build === 1 ? '~5–7h' : '~4–5h';
+    document.getElementById('bom-cost').textContent = build === 1 ? 'TPU req.' : '~$53';
+    tbody.innerHTML = rows.map(function(r) {
+      const typeLabel = r.type === 'print' ? 'PRINT' : r.type === 'buy' ? 'BUY' : 'OPT';
+      const costCell = r.cost ? '<td class="cost-cell">' + r.cost + '</td>' : '<td class="free-cell">' + (r.type === 'print' ? 'filament' : '—') + '</td>';
+      return '<tr><td>' + r.part + '</td><td><span class="item-type ' + r.type + '">' + typeLabel + '</span></td><td>' + r.mat + '</td><td>' + r.infill + '</td><td>' + r.qty + '</td><td style="color:var(--subtext)">' + r.note + '</td>' + costCell + '</tr>';
+    }).join('');
+  }
+
+  renderBOM();
+</script>
+</body>
+</html>
