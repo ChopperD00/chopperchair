@@ -1,0 +1,15 @@
+{
+  "torso_length_mm": 488,
+  "rear_leg_length_mm": 328,
+  "hip_width_mm": 254,
+  "ground_clearance_mm": 169,
+  "girth_mm": 576,
+  "weight_class": "M",
+  "confidence": 0.61,
+  "_method": "three_pass_side_rear_average",
+  "_valid": false,
+  "_issues": [
+    "hip_width_mm=337 out of range [40,300] (side photo, sitting position artifact)"
+  ],
+  "_note": "hip_width from rear standing photo (171mm) is more accurate than side sitting photo (337mm). Averaged value 254mm used for frame generation."
+}
